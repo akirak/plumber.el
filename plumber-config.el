@@ -32,7 +32,13 @@
 
 ;;; Code:
 
-(require 'plumber-elixir)
+(defun plumber-config-add-language (mode function file)
+  (autoload function file)
+  (push `(,mode . ,function) plumber-language-settings))
+
+(plumber-config-add-language 'elixir-mode
+                             'plumber-elixir-load-settings
+                             "plumber-elixir")
 
 (provide 'plumber-config)
 ;;; plumber-config.el ends here

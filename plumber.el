@@ -147,8 +147,16 @@ keybindings defined in the keymap activates."
 (defun plumber-set-buffer-language ()
   "Set a supported language for plumber."
   (interactive)
-  (setq plumber-buffer-language
-        (apply #'derived-mode-p (-map #'car plumber-language-settings))))
+  (let* ((language (apply #'derived-mode-p (-map #'car plumber-language-settings)))
+         (settings (and language (alist-get language plumber-language-settings))))
+    (setq plumber-buffer-language language)
+    ;; If the settings is not a list but a symbol, consider it as a
+    ;; function to load the actual settings. This allows the user to
+    ;; lazily load the settings.
+    (when (and settings (symbolp settings))
+      (if (fboundp settings)
+          (funcall settings)
+        (error "%s is not a valid function" settings)))))
 
 ;;;;; Defining languages
 

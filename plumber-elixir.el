@@ -63,14 +63,16 @@
           (backward-char 1)
           (goto-char (car (bounds-of-thing-at-point 'symbol))))))))
 
-(plumber-define-language elixir-mode
-  :beginning-of-defun elixir-beginning-of-defun
-  :function-body-begin-regexp plumber-elixir-block-begin-regexp
-  :function-body-end-function plumber-elixir-block-end-function
-  :down-list-begin-regexp plumber-elixir-block-begin-regexp
-  :list-end-function plumber-elixir-block-end-function
-  :list-item-regexp plumber-elixir-list-item-regexp
-  :word-regexp plumber-elixir-word-regexp)
+;;;###autoload
+(defun plumber-elixir-load-settings ()
+  (plumber-define-language elixir-mode
+    :beginning-of-defun elixir-beginning-of-defun
+    :function-body-begin-regexp plumber-elixir-block-begin-regexp
+    :function-body-end-function plumber-elixir-block-end-function
+    :down-list-begin-regexp plumber-elixir-block-begin-regexp
+    :list-end-function plumber-elixir-block-end-function
+    :list-item-regexp plumber-elixir-list-item-regexp
+    :word-regexp plumber-elixir-word-regexp))
 
 (provide 'plumber-elixir)
 ;;; plumber-elixir.el ends here

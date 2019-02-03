@@ -44,7 +44,7 @@
                                 elixir-sigil-delimiter-pair))))
     (rx-to-string
      `(or ,open-pair
-          (and symbol-start (char alnum "&:_^"))
+          (and symbol-start (char alnum "&:_^@"))
           (and (char "\"'^%!") (not space))))))
 
 (defconst plumber-elixir-word-regexp

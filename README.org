@@ -27,6 +27,18 @@ The following packages can be companions to plumber (or more precisely, plumber 
 - Emacs 25.1
 - avy
 - dash
+** Configuration
+#+begin_src emacs-lisp
+  (use-package plumber
+    :config
+    ;; Load built-in language settings
+    (require 'plumber-config)
+    ;; Turn on plumber-mode globally
+    (plumber-global-mode 1)
+    :custom
+    ;; Remap keys
+    (plumber-enable-keybindings t))
+#+end_src
 ** Usage and implementation statuses
 | Command                              | Elixir |
 |--------------------------------------+--------|

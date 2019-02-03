@@ -42,11 +42,11 @@
     (if (version< emacs-version "26")
         (progn
           (defalias 'plumber--if-let* 'if-let)
-          (defalias 'plumber--when-let* 'when-let)
-          (function-put #'plumber--if-let* 'lisp-indent-function 2)
-          (function-put #'plumber--when-let* 'lisp-indent-function 1))
+          (defalias 'plumber--when-let* 'when-let))
       (defalias 'plumber--if-let* 'if-let*)
-      (defalias 'plumber--when-let* 'when-let*))))
+      (defalias 'plumber--when-let* 'when-let*))
+    (function-put #'plumber--if-let* 'lisp-indent-function 2)
+    (function-put #'plumber--when-let* 'lisp-indent-function 1)))
 
 ;;;; Custom variables
 
@@ -153,14 +153,15 @@ keybindings defined in the keymap activates."
 ;;;;; Defining languages
 
 ;;;###autoload
-(cl-defun plumber-define-language (mode &rest args)
+(cl-defmacro plumber-define-language (mode &rest args)
   "Define settings for a major mode.
 
 MODE is a symbol of the mode, and ARGS is a plist which should be
 added to `plumber-language-settings'."
-  (plumber--if-let* ((pair (assoc mode plumber-language-settings)))
-                    (setcdr pair args)
-                    (push (cons mode args) plumber-language-settings)))
+  (declare (indent 1))
+  `(plumber--if-let* ((pair (assoc (quote, mode) plumber-language-settings)))
+       (setcdr pair (quote ,args))
+     (push (cons (quote ,mode) (quote ,args)) plumber-language-settings)))
 
 ;;;;; Jumping
 
@@ -193,13 +194,13 @@ added to `plumber-language-settings'."
       ((or '() (pred integerp))
        (progn
          (goto-char begin)
-         (when (re-search-forward (rx symbol-start (not space))
+         (when (re-search-forward (plumber--list-item-regexp)
                                   end t
                                   (or current-prefix-arg 1))
            (backward-char 1))))
       ('(4)
        (avy-with plumber-down-list
-         (avy--generic-jump (plumber--word-regexp)
+         (avy--generic-jump (plumber--list-item-regexp)
                             t plumber-avy-word-style
                             begin end))))))
 
@@ -224,9 +225,21 @@ is defined in the current language."
    (allow-fallback
     (plist-get plumber-fallback-settings key))))
 
+(defun plumber--lookup-value (key &optional allow-fallback)
+  "Like `plumber--lookup', but expand the symbol of its returned value."
+  (let ((ret (plumber--lookup key allow-fallback)))
+    (cl-typecase ret
+      (nil nil)
+      (symbol (symbol-value ret))
+      (t ret))))
+
 (defun plumber--word-regexp ()
-  (or (plumber--lookup :word-regexp)
+  (or (plumber--lookup-value :word-regexp)
       plumber-fallback-word-regexp))
+
+(defun plumber--list-item-regexp ()
+  (or (plumber--lookup-value :list-item-regexp)
+      plumber-falback-word-regexp))
 
 ;;;;; Jumping
 
@@ -237,15 +250,15 @@ is defined in the current language."
 
 (defun plumber--beginning-of-current-function-body (&optional inner)
   "Go to the beginning of the current function body."
-  (plumber--if-let* ((regexp (plumber--lookup :function-body-begin-regexp)))
-                    (unless (re-search-backward regexp
-                                                (save-excursion
-                                                  (plumber--beginning-of-defun)
-                                                  (point))
-                                                t)
-                      (error "Cannot find the beginning"))
-                    (message "Go to the beginning of the function instead.")
-                    (plumber--beginning-of-defun))
+  (plumber--if-let* ((regexp (plumber--lookup-value :function-body-begin-regexp)))
+      (unless (re-search-backward regexp
+                                  (save-excursion
+                                    (plumber--beginning-of-defun)
+                                    (point))
+                                  t)
+        (error "Cannot find the beginning"))
+    (message "Go to the beginning of the function instead.")
+    (plumber--beginning-of-defun))
   (when inner
     (forward-char (length (thing-at-point 'symbol)))))
 
@@ -257,24 +270,27 @@ is defined in the current language."
 (defun plumber--matching-function-body-end ()
   "Go to the end of the function body matching the beginning."
   (plumber--if-let* ((func (plumber--lookup :function-body-end-function)))
-                    (funcall func)
-                    (plumber--end-of-defun)))
+      (funcall func)
+    (plumber--end-of-defun)))
 
 (defun plumber--beginning-of-down-list ()
   "Go to the beginning of the list under the current position."
-  (plumber--if-let* ((regexp (plumber--lookup :down-list-begin-regexp)))
-                    (re-search-forward regexp (save-excursion
-                                                (plumber--end-of-defun)
-                                                (point))
-                                       t)
-                    ;; FIXME: Implement down-list
-                    (error ":down-list-begin-regexp is undefined, and no fallback is defined")))
+  (plumber--if-let* ((regexp (plumber--lookup-value :down-list-begin-regexp)))
+      (when (re-search-forward regexp
+                               (save-excursion
+                                 (plumber--end-of-defun)
+                                 (point))
+                               t)
+        (backward-char (length (thing-at-point 'symbol))))
+    ;; FIXME: Implement down-list
+    (error ":down-list-begin-regexp is undefined, and no fallback is defined")))
 
 (defun plumber--matching-list-end ()
   "Go to the end of the list matching the beginning."
   (plumber--if-let* ((func (plumber--lookup :list-end-function)))
-                    (funcall func)
-                    (error "fallback")))
+      (funcall func)
+    ;; FIXME: Implement a fallback
+    (error "fallback")))
 
 (provide 'plumber)
 ;;; plumber.el ends here

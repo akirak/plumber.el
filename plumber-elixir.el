@@ -32,13 +32,28 @@
 ;;; Code:
 
 (require 'plumber)
+(require 'elixir-mode)
 
 (defconst plumber-elixir-block-begin-regexp
-  (rx symbol-start (? ",") "do" symbol-end))
+  (rx (or (seq symbol-start "do")
+          (seq "," (+ space) "do:"))
+      symbol-end))
+
+(defconst plumber-elixir-list-item-regexp
+  (let ((open-pair `(or ,@(-map (lambda (p) (char-to-string (car p)))
+                                elixir-sigil-delimiter-pair))))
+    (rx-to-string
+     `(or ,open-pair
+          (and symbol-start (char alnum "&:_^"))
+          (and (char "\"'^%!") (not space))))))
+
+(defconst plumber-elixir-word-regexp
+  (rx symbol-start (or (syntax word) (syntax symbol))))
 
 (defun plumber-elixir-block-end-function ()
+  "Find an end of the block."
   (let ((open (thing-at-point 'symbol)))
-    (if (string-equal ":do" open)
+    (if (string-equal "do:" open)
         (end-of-line 1)
       (let ((level (save-excursion
                      (back-to-indentation)
@@ -48,16 +63,14 @@
           (backward-char 1)
           (goto-char (car (bounds-of-thing-at-point 'symbol))))))))
 
-(add-to-list
- 'plumber-language-settings
- `(elixir-mode
-   :beginning-of-defun elixir-beginning-of-defun
-   :function-body-begin-regexp ,plumber-elixir-block-begin-regexp
-   :function-body-end-function plumber-elixir-block-end-function
-   :down-list-begin-regexp ,plumber-elixir-block-begin-regexp
-   :list-end-function plumber-elixir-block-end-function
-   :word-regexp ,(rx symbol-start
-                     (or (syntax word) (syntax symbol)))))
+(plumber-define-language elixir-mode
+  :beginning-of-defun elixir-beginning-of-defun
+  :function-body-begin-regexp plumber-elixir-block-begin-regexp
+  :function-body-end-function plumber-elixir-block-end-function
+  :down-list-begin-regexp plumber-elixir-block-begin-regexp
+  :list-end-function plumber-elixir-block-end-function
+  :list-item-regexp plumber-elixir-list-item-regexp
+  :word-regexp plumber-elixir-word-regexp)
 
 (provide 'plumber-elixir)
 ;;; plumber-elixir.el ends here

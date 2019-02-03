@@ -84,22 +84,64 @@ This is used when :word-regexp property is not defined in the
 settings of the current language."
   :group 'plumber)
 
+(defcustom plumber-enable-keybindings nil
+  "Enable additional keybindings defined in `plumber-remap-mode-map'.
+
+If this variable is non-nil, `plumber-remap-mode' is turned on
+when `plumber-mode' is turned on, and hence additional
+keybindings defined in the keymap activates."
+  :group 'plumber)
+
 ;;;; Variables
 
 (defvar-local plumber-buffer-language nil
   "Major mode used by plumber in the current buffer.")
+
+(defvar plumber-remap-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [remap down-list] 'plumber-down-list)
+    map))
+
+(defvar plumber-enabled-hook nil
+  "Hook run after `plumber-mode' is enabled.")
+(defvar plumber-disabled-hook nil
+  "Hook run after `plumber-mode' is disabled.")
 
 ;;;; Autoload functions
 
 ;;;###autoload
 (define-minor-mode plumber-mode
   "Minor mode for editing source code."
-  :global t
+  :init-value nil
+  :lighter ("  plumber" (:eval (when plumber-buffer-language
+                                 (format "[%s]" plumber-buffer-language))))
+  :group 'plumber
   (cond
    (plumber-mode
-    (add-hook 'after-change-major-mode-hook 'plumber-set-buffer-language))
+    (progn
+      (add-hook 'after-change-major-mode-hook 'plumber-set-buffer-language)
+      (plumber-set-buffer-language)
+      (run-hooks 'plumber-enabled-hook)))
    (t
-    (remove-hook 'after-change-major-mode-hook 'plumber-set-buffer-language))))
+    (progn
+      (remove-hook 'after-change-major-mode-hook 'plumber-set-buffer-language)
+      (run-hooks 'plumber-disabled-hook))))
+  (plumber-remap-mode (and plumber-mode
+                           plumber-enable-keybindings)))
+
+;;;###autoload
+(define-globalized-minor-mode plumber-global-mode
+  plumber-mode
+  plumber-mode)
+
+;;;###autoload
+(define-minor-mode plumber-remap-mode
+  "Turn on/off additional keybindings for `plumber-mode'.
+
+\\{plumber-remap-mode-map}"
+  :init-value nil
+  :group 'plumber
+  :keymap plumber-remap-mode-map)
 
 ;;;###autoload
 (defun plumber-set-buffer-language ()
@@ -173,6 +215,8 @@ KEY is a key in the plist.
 When ALLOW-FALLBACK is non-nil, a corresponding value is looked
 up in `plumber-fallback-settings' if and only if no non-nil value
 is defined in the current language."
+  (unless plumber-mode
+    (user-error "Please turn on plumber-mode"))
   (cond
    (plumber-buffer-language
     (plist-get (alist-get plumber-buffer-language plumber-language-settings)

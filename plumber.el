@@ -92,6 +92,24 @@ when `plumber-mode' is turned on, and hence additional
 keybindings defined in the keymap activates."
   :group 'plumber)
 
+(defcustom plumber-fallback-down-block-function
+  'plumber-down-block-fallback
+  "Fallback of `plumber--beginning-of-down-block'.
+
+This is called when no corresponding setting is found for the current
+language."
+  :type 'function
+  :group 'plumber)
+
+(defcustom plumber-fallback-block-end-function
+  'plumber-block-end-fallback
+  "Fallback of `plumber--matching-block-end'.
+
+This is called when no corresponding setting is found for the current
+language."
+  :type 'function
+  :group 'plumber)
+
 ;;;; Variables
 
 (defvar-local plumber-buffer-language nil
@@ -290,15 +308,31 @@ is defined in the current language."
                                  (point))
                                t)
         (backward-char (length (thing-at-point 'symbol))))
-    ;; FIXME: Implement down-list
-    (error ":down-block-begin-regexp is undefined, and no fallback is defined")))
+    (if (fboundp plumber-fallback-down-block-function)
+        (funcall plumber-fallback-down-block-function)
+      (plumber-down-block-fallback))))
+
+(defun plumber-down-block-fallback ()
+  "Built-in fallback for `plumber-down-block'."
+  (if (and (bound-and-true-p smartparens-mode)
+           (fboundp 'sp-down-sexp))
+      (sp-down-sexp)
+    (down-list)))
 
 (defun plumber--matching-block-end ()
   "Go to the end of the list matching the beginning."
   (plumber--if-let* ((func (plumber--lookup :block-end-function)))
       (funcall func)
     ;; FIXME: Implement a fallback
-    (error "fallback")))
+    (if (boundp plumber-fallback-block-end-function)
+        (funcall plumber-fallback-block-end-function)
+      (plumber-block-end-fallback))))
+
+(defun plumber-block-end-fallback ()
+  (if (and (bound-and-true-p smartparens-mode)
+           (fboundp 'sp-end-of-sexp))
+      (sp-end-of-sexp)
+    (end-of-defun)))
 
 (provide 'plumber)
 ;;; plumber.el ends here

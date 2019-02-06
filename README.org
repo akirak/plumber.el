@@ -1,28 +1,13 @@
 * Plumber.el
-Plumber.el (plumber) is an Emacs package for editing source code efficiently. It is basically a set of additions to [[https://github.com/abo-abo/avy][avy]] with support for language-specific (and opinionated) features.
-** Design goals
-Plumber is **not** a framework that would support all programming languages well. There are several existing Emacs packages out there for jumping, text objects, etc. Plumber won't replace any of those. Instead, it aims to allow editing in some programming languages more intuitively.
+Plumber.el (plumber) is an Emacs package for navigating and editing source code efficiently.
+** Features
+Plumber supports the following features in its supported languages:
 
-Plumber will **not** achieve the following goals:
+- Structured navigation optionally with avy
 
-- A universal editing model for any programming languages.
-- Consistency.
-- Completeness.
+Plumber supports the following languages:
 
-Plumber is partly inspired by [[https://github.com/abo-abo/lispy][lispy]]. Lispy lets you edit lisp code efficiently, but it is unsuitable for non-lisp languages. Plumber is an alternative to lispy with a limited feature set but for broader languages, including (some) non-lisp languages.
-
-The following is a list of languages I want to support with plumber:
-
-1. Elixir (the top priority)
-2. Haskell
-3. C-like languages, e.g. Java and JavaScript (maybe)
-4. Emacs Lisp
-
-The following packages can be companions to plumber (or more precisely, plumber can be a companion to these packages). Again, plumber will never replace them:
-
-- [[https://github.com/Fuco1/smartparens][smartparens]] does a good job of dealing with parentheses.
-- [[https://github.com/jojojames/smart-jump][smart-jump]]
-- [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] and its companion packages
+- Elixir
 ** Prerequisites
 - Emacs 25.1
 - avy
@@ -39,16 +24,7 @@ The following packages can be companions to plumber (or more precisely, plumber 
     ;; Remap keys
     (plumber-enable-keybindings t))
 #+end_src
-** Usage and implementation statuses
-| Command                              | Elixir |
-|--------------------------------------+--------|
-| =plumber-jump-to-word-in-function-0= | Done   |
-| =plumber-down-list=                  | Done   |
-*** =plumber-jump-to-word-in-function-0=
-This is a wrapper around avy which lets you jump to a word inside the function around the point.
-*** =plumber-down-list=
-This command moves the point to the first word inside the first block/list after the current point. If a universal prefix (~C-u~) is given, it lets you select a position inside the block using avy. If a numeric prefix is given, it moves the point to n-th word inside the block.
-
-When the point is on a function name, this function moves the point to a word inside its function body. However, if the point is on the beginning of a nested block, it lets you jump to a word inside the block.
+** Usage
+For details on commands, see [[https://github.com/akirak/plumber.el/wiki][the wiki]].
 ** License
 GPL v3

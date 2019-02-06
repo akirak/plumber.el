@@ -192,7 +192,7 @@ added to `plumber-language-settings'."
 ;;;;; Jumping
 
 ;;;###autoload
-(defun plumber-jump-to-word-in-function-0 ()
+(defun plumber-jump-to-word-in-current-function ()
   "Jump to a word inside the body of the current function."
   (interactive)
   (let (begin end)
@@ -201,7 +201,7 @@ added to `plumber-language-settings'."
       (setq begin (+ (point) (length (thing-at-point 'symbol))))
       (plumber--matching-function-body-end)
       (setq end (1- (point))))
-    (avy-with plumber-jump-to-word-in-function-0
+    (avy-with plumber-jump-to-word-in-current-function
       (avy--generic-jump (rx symbol-start
                              (or (syntax word) (syntax symbol)))
                          t plumber-avy-word-style

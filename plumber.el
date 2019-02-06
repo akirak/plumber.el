@@ -99,7 +99,7 @@ keybindings defined in the keymap activates."
 
 (defvar plumber-remap-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [remap down-list] 'plumber-down-list)
+    (define-key map [remap down-list] 'plumber-down-block)
     map))
 
 (defvar plumber-enabled-hook nil
@@ -189,14 +189,14 @@ added to `plumber-language-settings'."
                          t plumber-avy-word-style
                          begin end))))
 ;;;###autoload
-(defun plumber-down-list ()
-  "Go down the current syntax tree."
+(defun plumber-down-block ()
+  "Enter the block under the current level."
   (interactive)
   (let (begin end)
     (save-excursion
-      (plumber--beginning-of-down-list)
+      (plumber--beginning-of-down-block)
       (setq begin (+ (point) (length (thing-at-point 'symbol))))
-      (plumber--matching-list-end)
+      (plumber--matching-block-end)
       (setq end (1- (point))))
     (pcase current-prefix-arg
       ((or '() (pred integerp))
@@ -207,7 +207,7 @@ added to `plumber-language-settings'."
                                   (or current-prefix-arg 1))
            (backward-char 1))))
       ('(4)
-       (avy-with plumber-down-list
+       (avy-with plumber-down-block
          (avy--generic-jump (plumber--list-item-regexp)
                             t plumber-avy-word-style
                             begin end))))))
@@ -281,9 +281,9 @@ is defined in the current language."
       (funcall func)
     (plumber--end-of-defun)))
 
-(defun plumber--beginning-of-down-list ()
+(defun plumber--beginning-of-down-block ()
   "Go to the beginning of the list under the current position."
-  (plumber--if-let* ((regexp (plumber--lookup-value :down-list-begin-regexp)))
+  (plumber--if-let* ((regexp (plumber--lookup-value :down-block-begin-regexp)))
       (when (re-search-forward regexp
                                (save-excursion
                                  (plumber--end-of-defun)
@@ -291,11 +291,11 @@ is defined in the current language."
                                t)
         (backward-char (length (thing-at-point 'symbol))))
     ;; FIXME: Implement down-list
-    (error ":down-list-begin-regexp is undefined, and no fallback is defined")))
+    (error ":down-block-begin-regexp is undefined, and no fallback is defined")))
 
-(defun plumber--matching-list-end ()
+(defun plumber--matching-block-end ()
   "Go to the end of the list matching the beginning."
-  (plumber--if-let* ((func (plumber--lookup :list-end-function)))
+  (plumber--if-let* ((func (plumber--lookup :block-end-function)))
       (funcall func)
     ;; FIXME: Implement a fallback
     (error "fallback")))
